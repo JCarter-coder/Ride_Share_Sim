@@ -23,3 +23,7 @@ python3 simulation.py
 ## Dependencies
 
 None
+
+## Map Data Format
+
+The map data is captured in `map.csv`. Each row of this file represents a directed edge which contains values that represent the starting point, ending point, and travel time (i.e. weight) respectively. When the simulation is ran, the `map` attribute within Simulation instantiates a Graph passing the .csv file name as an argument to load the data into `map`.
