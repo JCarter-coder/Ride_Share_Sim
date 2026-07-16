@@ -1,33 +1,27 @@
 from car import Car
 from rider import Rider
+from graph import Graph
 
 class Simulation:
-  def __init__(self):
+  def __init__(self, map_filename):
     self.cars = {}
     self.riders = {}
+    self.map = Graph()
+
+    self.map.load_from_file(map_filename)
 
   def __str__(self):
     return (f"""
-----Simulation Attributes----
+--- Simulation Attributes ---
+
 Cars: {self.cars}
 
 Riders: {self.riders}
+
+{self.map}
 -----------------------------
-""")
-  
+""")  
 
-simulation = Simulation()
-print(simulation)
-
-simulation.cars["CAR001"] = Car("CAR001", (10, 5))
-simulation.cars["CAR002"] = Car("CAR002", (5, 6))
-
-simulation.riders["RIDER_A"] = Rider("RIDER_A", (1, 2), (20, 15))
-simulation.riders["RIDER_B"] = Rider("RIDER_B", (10, 12), (2, 1))
-
-print(simulation)
-print(simulation.cars.get("CAR001"))
-print(simulation.cars.get("CAR002"))
-print(simulation.riders.get("RIDER_A"))
-print(simulation.riders.get("RIDER_B"))
-print(simulation.riders.get("RIDER_C"))
+if __name__ == "__main__":
+  simulation = Simulation('map.csv')
+  print(simulation)
