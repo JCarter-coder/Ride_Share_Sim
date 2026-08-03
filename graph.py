@@ -1,5 +1,11 @@
 import csv
 
+"""
+Representation of map.csv:
+
+
+"""
+
 class Graph:
   def __init__(self):
     self.adjacency_list = {}
@@ -21,7 +27,7 @@ class Graph:
         for row in reader:
           if len(row) == 3:
             start, end, weight = row
-            self.add_edge(start.strip(), end.strip(), weight.strip())
+            self.add_edge(str(start.strip()), str(end.strip()), int(weight.strip()))
       print("Map loaded successfully.")
     except FileNotFoundError:
       print(f"Error: file '{filename}' not found.")
@@ -29,11 +35,18 @@ class Graph:
       print(f"An error occurred: {e}")
 
   def __str__(self):
-    return f"""Graph Adjacency List:
+    return f"""
+    A
+   / \\
+  5   3
+ /     \\
+B       C
+ \\     /
+  4   1
+   \\ /
+    D
+
+Graph Adjacency List:
 
 {"\n".join([f"{key} -> {val}" for key, val in self.adjacency_list.items()])}
 """
-  
-# graph = Graph()
-# graph.load_from_file('map.csv')
-# print(graph)

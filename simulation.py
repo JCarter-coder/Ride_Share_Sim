@@ -17,11 +17,21 @@ class Simulation:
 Cars: {self.cars}
 
 Riders: {self.riders}
-
 {self.map}
 -----------------------------
 """)  
 
 if __name__ == "__main__":
   simulation = Simulation('map.csv')
+
+  car1 = Car("CAR001", 'A')
+  car2 = Car("CAR002", 'B')
+
   print(simulation)
+
+  car1.calculate_route('C', simulation.map.adjacency_list)
+  car2.calculate_route('C', simulation.map.adjacency_list)
+
+  print(car1)
+  print(car2)
+
