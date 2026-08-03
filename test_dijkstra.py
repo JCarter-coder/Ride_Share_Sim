@@ -12,6 +12,6 @@ if __name__ == "__main__":
   final_location = "D"
   path, distance = find_shortest_path(graph, start_location, final_location)
 
-  print(f"Finding shortest path from node '{start_location}' to noe '{final_location}'...\n")
+  print(f"Finding shortest path from node '{start_location}' to node '{final_location}'...\n")
   print(f"Path: {path}")
   print(f"Final Distance: {distance}")

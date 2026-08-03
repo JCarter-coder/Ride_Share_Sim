@@ -27,3 +27,8 @@ None
 ## Map Data Format
 
 The map data is captured in `map.csv`. Each row of this file represents a directed edge which contains values that represent the starting point, ending point, and travel time (i.e. weight) respectively. When the simulation is ran, the `map` attribute within Simulation instantiates a Graph passing the .csv file name as an argument to load the data into `map`.
+
+## Pathfinding
+
+Pathfinding is accomplished via Dijkstra's Algorithm. This is a greedy algorithm which works effectively on weighted graphs. The algorithm returns two dictionaries--Distances and Predecessors.
+Predecessors is used by the `reconstruct_path()` method to return the path. Distances is used to obtain the value with the `end_node` key.

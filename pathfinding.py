@@ -25,6 +25,8 @@ def dijkstra(graph, start_node):
         distances[neighbor] = distance
         predecessors[neighbor] = current_node
         heapq.heappush(priority_queue, (distance, neighbor))
+  print(f"Distances: {distances}")
+  print(f"Predecessors: {predecessors}")
   return distances, predecessors
 
 def reconstruct_path(predecessors, end_node):
