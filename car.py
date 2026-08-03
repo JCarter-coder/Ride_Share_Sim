@@ -20,7 +20,7 @@ Route {self.route} - Time: {self.route_time}
     end_node = destination
     path, distance = find_shortest_path(graph, start_node, end_node)
     self.route = path
-    self.route_time =distance
+    self.route_time = distance
 
 # car1 = Car("CAR001", (10, 5))
 # car2 = Car("CAR002", (5, 6))
