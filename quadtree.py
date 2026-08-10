@@ -103,8 +103,6 @@ class QuadtreeNode:
         child.find_nearest(point, best_found)
 
     return
-    
-
 
 class Quadtree:
   """A quadtree data structure for efficient spatial queries."""
