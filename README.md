@@ -41,4 +41,6 @@ When searching for a closest neighbor to a given point, partitions closest to th
 
 The `quadtree.py` file can be tested by running:
 
-`pytest test_quadtree.py`
+```bash
+pytest test_quadtree.py
+```
