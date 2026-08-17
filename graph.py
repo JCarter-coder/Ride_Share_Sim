@@ -36,16 +36,6 @@ class Graph:
 
   def __str__(self):
     return f"""
-    A
-   / \\
-  5   3
- /     \\
-B       C
- \\     /
-  4   1
-   \\ /
-    D
-
 Graph Adjacency List:
 
 {"\n".join([f"{key} -> {val}" for key, val in self.adjacency_list.items()])}
