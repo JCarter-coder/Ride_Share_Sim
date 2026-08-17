@@ -102,9 +102,9 @@ class Simulation:
         rider.status = "completed"
         car.assigned_rider = None
 
-      elif event.event_type == "TRIP_COMPLETION":
-        rider_id = event.metadata["rider_id"]
-        print(f" -> Rider {rider_id}'s trip is complete. Driver is now available.")
+      # elif event.event_type == "TRIP_COMPLETION":
+      #   rider_id = event.metadata["rider_id"]
+      #   print(f" -> Rider {rider_id}'s trip is complete. Driver is now available.")
 
     print(f"\n--- Simulation Complete (sim time: {self.current_time}) ---")
 
