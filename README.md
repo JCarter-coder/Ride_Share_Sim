@@ -47,3 +47,8 @@ pytest test_quadtree.py
 
 ## Simulation Engine Prototype
 
+The simulation engine is a loop that processes the events in the event priority queue. Events are prioritized by the timestamp. In the loop, the highest priority event (smallest timestamp value) is popped off of the queue to process. If the event is a `RIDE_REQUEST`, the closest car is determined (using a simplified method for now) and then the rider is assigned to this car. The status of the car is updated and the duration to pickup the rider is calculated. A new event is then created and added to the priority queue for a `PICKUP`.
+
+If the next event being processed is a `PICKUP`, the car's location is updated to the rider's current location. The car and rider status are both updated as applicable. The dropoff duration is then calculated. Lastly, a new event is created and added to the priority queue for a `DROPOFF`.
+
+If the next event from the priority queue is a `DROPOFF`, the car's location is updated to the rider's destination, the car's status is updated to `available`, the rider's status is updated to `completed`, and the car's assigned rider is reset to `None`.
