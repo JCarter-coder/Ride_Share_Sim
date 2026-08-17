@@ -7,9 +7,3 @@ class Rider:
 
   def __str__(self):
     return f"\nRider {self.id} at {self.start_location} {self.status} for ride to {self.destination}."
-  
-# rider1 = Rider("RIDER_A", (1, 2), (20, 15))
-# rider2 = Rider("RIDER_B", (10, 12), (2, 1))
-
-# print(rider1)
-# print(rider2)
