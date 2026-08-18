@@ -1,7 +1,8 @@
 import heapq
 import math
 from dataclasses import dataclass, field
-from typing import Any
+# from typing import Any
+from itertools import count
 from car import Car
 from rider import Rider
 from graph import Graph
@@ -12,6 +13,7 @@ TRAVEL_SPEED_FACTOR = 1
 @dataclass(order=True) # generates six comparison methods based on the order of the fields
 class Event:
   timestamp: int
+  event_sequence: int
   event_type: str # 'RIDE_REQUEST', 'TRIP_COMPLETION', etc.
   metadata: Rider | Car = field(compare=False) # Field ignored when ordering events in the priority queue
 
@@ -19,6 +21,7 @@ class Simulation:
   def __init__(self, map_filename):
     self.current_time = 0
     self.event_queue = []
+    self.event_sequence: int = count()
     self.cars = {}
     self.riders = {}
     self.map = Graph()
@@ -48,9 +51,17 @@ class Simulation:
 
     return closest_car
 
-  def schedule_event(self, event: Event) -> None:
+  def schedule_event(self, timestamp: int, event_type: str, metadata: Rider | Car) -> None:
     """Adds an event to the event queue."""
-    heapq.heappush(self.event_queue, event)
+    heapq.heappush(
+      self.event_queue, 
+      Event(
+        timestamp,
+        next(self.event_sequence),
+        event_type,
+        metadata
+      )
+    )
 
   def run(self) -> None:
     """Runs the simulation by processing events in the event queue."""
@@ -71,7 +82,7 @@ class Simulation:
         # Calculate time from car to rider
         pickup_duration = self.calculate_travel_time(car.location, rider.start_location)
 
-        self.schedule_event(Event(self.current_time + pickup_duration, "PICKUP", car))
+        self.schedule_event(self.current_time + pickup_duration, "PICKUP", car)
         print(f"TIME {self.current_time}: CAR {car.id} dispatched to RIDER {rider.id}")
 
       elif event.event_type == "PICKUP":
@@ -87,7 +98,7 @@ class Simulation:
         # Calculate time from rider to destination
         dropoff_duration = self.calculate_travel_time(car.location, rider.destination)
 
-        self.schedule_event(Event(self.current_time + dropoff_duration, "DROPOFF", car))
+        self.schedule_event(self.current_time + dropoff_duration, "DROPOFF", car)
         #print(f"TIME {self.current_time}: CAR {car.id} dispatched to RIDER {rider.id}")
 
       elif event.event_type == "DROPOFF":
@@ -128,8 +139,8 @@ if __name__ == "__main__":
   rider1 = Rider("RIDER001", (20.0, 5.0), (10.0, 10.0))
   rider2 = Rider("RIDER002", (20.0, 20.0), (10.0, 10.0))
 
-  simulation.schedule_event(Event(timestamp=5, event_type="RIDE_REQUEST", metadata=rider1))
-  simulation.schedule_event(Event(timestamp=10, event_type="RIDE_REQUEST", metadata=rider2))
+  simulation.schedule_event(timestamp=5, event_type="RIDE_REQUEST", metadata=rider1)
+  simulation.schedule_event(timestamp=10, event_type="RIDE_REQUEST", metadata=rider2)
 
   # car1.calculate_route('C', simulation.map.adjacency_list)
   # car2.calculate_route('C', simulation.map.adjacency_list)
