@@ -1,9 +1,12 @@
 class Rider:
-  def __init__(self, rider_id, pickup_loc, dropoff_loc):
+  def __init__(self, rider_id: str, pickup_loc: tuple, dropoff_loc: tuple):
     self.id = rider_id
     self.start_location = pickup_loc
     self.destination = dropoff_loc
-    self.status = "waiting" # in_car, completed
+    self.status: str = "waiting" # "in_car", "completed"
+    self.request_time: int | None = None
+    self.pickup_time: int | None = None
+    self.dropoff_time: int | None = None
 
   def __str__(self):
     return f"\nRider {self.id} at {self.start_location} {self.status} for ride to {self.destination}."
