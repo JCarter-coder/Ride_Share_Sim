@@ -63,6 +63,48 @@ class Simulation:
       )
     )
 
+  def handle_rider_request(self, rider: Rider) -> None:
+    # rider: Rider = event.metadata
+    print(f"Matching rider {rider.id} with a driver...\n")
+    # Find closest available car and assign it to the rider
+    car = self.find_closest_car_brute_force(rider.start_location)
+    # Link the rider to this car and update car's status
+    car.assigned_rider = rider
+    car.status = "en_route_to_pickup"
+    # Calculate time from car to rider
+    pickup_duration = self.calculate_travel_time(car.location, rider.start_location)
+
+    self.schedule_event(self.current_time + pickup_duration, "PICKUP_ARRIVAL", car)
+    print(f"TIME {self.current_time}: CAR {car.id} dispatched to RIDER {rider.id}")
+
+  def handle_pickup_arrival(self, car: Car) -> None:
+    # car: Car = event.metadata
+    rider: Rider = car.assigned_rider
+
+    print(f"TIME {self.current_time}: CAR {car.id} picked up RIDER {rider.id}")
+
+    # Update car location, car status, and rider status
+    car.location = rider.start_location
+    car.status = "en_route_to_destination"
+    rider.status = "in_car"
+    # Calculate time from rider to destination
+    dropoff_duration = self.calculate_travel_time(car.location, rider.destination)
+
+    self.schedule_event(self.current_time + dropoff_duration, "DROPOFF_ARRIVAL", car)
+    #print(f"TIME {self.current_time}: CAR {car.id} dispatched to RIDER {rider.id}")
+
+  def handle_dropoff_arrival(self, car: Car) -> None:
+    # car: Car = event.metadata
+    rider: Rider = car.assigned_rider
+
+    print(f"TIME {self.current_time}: CAR {car.id} dropped off RIDER {rider.id}")
+
+    # Update car location, car status, and rider status
+    car.location = rider.destination
+    car.status = "available"
+    rider.status = "completed"
+    car.assigned_rider = None
+
   def run(self) -> None:
     """Runs the simulation by processing events in the event queue."""
     print("--- Starting Simulation ---\n")
@@ -71,51 +113,17 @@ class Simulation:
       # Advance the simulation clock
       self.current_time = event.timestamp
 
-      if event.event_type == "RIDE_REQUEST":
-        rider: Rider = event.metadata
-        print(f"Matching rider {rider.id} with a driver...\n")
-        # Find closest available car and assign it to the rider
-        car = self.find_closest_car_brute_force(rider.start_location)
-        # Link the rider to this car and update car's status
-        car.assigned_rider = rider
-        car.status = "en_route_to_pickup"
-        # Calculate time from car to rider
-        pickup_duration = self.calculate_travel_time(car.location, rider.start_location)
+      if event.event_type == "RIDER_REQUEST":
+        self.handle_rider_request(event.metadata)
 
-        self.schedule_event(self.current_time + pickup_duration, "PICKUP", car)
-        print(f"TIME {self.current_time}: CAR {car.id} dispatched to RIDER {rider.id}")
+      elif event.event_type == "PICKUP_ARRIVAL":
+        self.handle_pickup_arrival(event.metadata)
 
-      elif event.event_type == "PICKUP":
-        car: Car = event.metadata
-        rider: Rider = car.assigned_rider
+      elif event.event_type == "DROPOFF_ARRIVAL":
+        self.handle_dropoff_arrival(event.metadata)
 
-        print(f"TIME {self.current_time}: CAR {car.id} picked up RIDER {rider.id}")
-
-        # Update car location, car status, and rider status
-        car.location = rider.start_location
-        car.status = "en_route_to_destination"
-        rider.status = "in_car"
-        # Calculate time from rider to destination
-        dropoff_duration = self.calculate_travel_time(car.location, rider.destination)
-
-        self.schedule_event(self.current_time + dropoff_duration, "DROPOFF", car)
-        #print(f"TIME {self.current_time}: CAR {car.id} dispatched to RIDER {rider.id}")
-
-      elif event.event_type == "DROPOFF":
-        car: Car = event.metadata
-        rider: Rider = car.assigned_rider
-
-        print(f"TIME {self.current_time}: CAR {car.id} dropped off RIDER {rider.id}")
-
-        # Update car location, car status, and rider status
-        car.location = rider.destination
-        car.status = "available"
-        rider.status = "completed"
-        car.assigned_rider = None
-
-      # elif event.event_type == "TRIP_COMPLETION":
-      #   rider_id = event.metadata["rider_id"]
-      #   print(f" -> Rider {rider_id}'s trip is complete. Driver is now available.")
+      else: 
+        raise ValueError(f"Unknown event type: {event.event_type}")
 
     print(f"\n--- Simulation Complete (sim time: {self.current_time}) ---")
 
@@ -139,8 +147,8 @@ if __name__ == "__main__":
   rider1 = Rider("RIDER001", (20.0, 5.0), (10.0, 10.0))
   rider2 = Rider("RIDER002", (20.0, 20.0), (10.0, 10.0))
 
-  simulation.schedule_event(timestamp=5, event_type="RIDE_REQUEST", metadata=rider1)
-  simulation.schedule_event(timestamp=10, event_type="RIDE_REQUEST", metadata=rider2)
+  simulation.schedule_event(timestamp=5, event_type="RIDER_REQUEST", metadata=rider1)
+  simulation.schedule_event(timestamp=10, event_type="RIDER_REQUEST", metadata=rider2)
 
   # car1.calculate_route('C', simulation.map.adjacency_list)
   # car2.calculate_route('C', simulation.map.adjacency_list)
