@@ -21,9 +21,12 @@ def test_car_initialization(create_car):
   assert car.id == "CAR001"
   assert car.location == (10.0, 5.0)
   assert car.status == "available"
-  assert car.destination is None
+  assert car.assigned_rider is None
   assert car.route is None
   assert car.route_time is None
+  assert car.busy_start_time is None
+  assert car.total_busy_time == 0
+  assert car.trips_completed == 0
 
 def test_car_str(create_car):
   car = create_car
