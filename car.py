@@ -6,11 +6,11 @@ class Car:
   def __init__(self, id: str, location: tuple):
     self.id: str = id # string
     self.location: tuple = location # (x: float, y: float)
-    self.status: str = "available" # "en_route_to_pickup", "en_route_to_destination"
+    self.status: str = "available" # -> "en_route_to_pickup" -> "en_route_to_destination" ->
     self.assigned_rider: Rider | None = None
     # self.destination: tuple | None = None
-    self.route: list | None = None
-    self.route_time: float | None = None
+    self.route: list[tuple] | None = None
+    self.route_time: int | None = None
     self.busy_start_time = None
     self.total_busy_time: int = 0
     self.trips_completed: int = 0
