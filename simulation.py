@@ -1,27 +1,36 @@
+import argparse
 import heapq
 import math
 from dataclasses import dataclass, field
+from enum import Enum, auto
 # from typing import Any
 from itertools import count
 from car import Car
 from rider import Rider
 from graph import Graph
 
-# Global constant
+# Global settings
 TRAVEL_SPEED_FACTOR = 1
+DEFAULT_MAP: str = 'map.csv'
+DEFAULT_CANDIDATE_COUNT = 5
+
+class EventStatus(Enum):
+  RIDER_REQUEST = auto()
+  PICKUP_ARRIVAL = auto()
+  DROPOFF_ARRIVAL = auto()
 
 @dataclass(order=True) # generates six comparison methods based on the order of the fields
 class Event:
   timestamp: int
-  event_sequence: int
+  sequence_number: int
   event_type: str # 'RIDE_REQUEST', 'TRIP_COMPLETION', etc.
-  metadata: Rider | Car = field(compare=False) # Field ignored when ordering events in the priority queue
+  data: Rider | Car = field(compare=False) # Field ignored when ordering events in the priority queue
 
 class Simulation:
   def __init__(self, map_filename):
-    self.current_time = 0
-    self.event_queue = []
-    self.event_sequence: int = count()
+    self.current_time: int = 0
+    self.event_queue: list[Event] = []
+    self.sequence_number: int = count()
     self.cars = {}
     self.riders = {}
     self.map = Graph()
@@ -42,6 +51,9 @@ class Simulation:
     car = None
 
     for car in self.cars.values():
+      # Ensure car's status is available before attempting to calculate
+      if car.status != "available":
+        continue
       distance = self.calculate_travel_time(car.location, rider_location)
       print(f"{car.id} distance to {rider_location} -> {distance}")
       if distance < shortest_distance:
@@ -51,20 +63,23 @@ class Simulation:
 
     return closest_car
 
-  def schedule_event(self, timestamp: int, event_type: str, metadata: Rider | Car) -> None:
+  # --- EVENT HANDLERS ---
+
+  # Schedule
+  def schedule_event(self, timestamp: int, event_type: str, data: Rider | Car) -> None:
     """Adds an event to the event queue."""
     heapq.heappush(
       self.event_queue, 
       Event(
         timestamp,
-        next(self.event_sequence),
+        next(self.sequence_number),
         event_type,
-        metadata
+        data
       )
     )
 
+  # Rider request
   def handle_rider_request(self, rider: Rider) -> None:
-    # rider: Rider = event.metadata
     print(f"Matching rider {rider.id} with a driver...\n")
     # Find closest available car and assign it to the rider
     car = self.find_closest_car_brute_force(rider.start_location)
@@ -77,8 +92,9 @@ class Simulation:
     self.schedule_event(self.current_time + pickup_duration, "PICKUP_ARRIVAL", car)
     print(f"TIME {self.current_time}: CAR {car.id} dispatched to RIDER {rider.id}")
 
+  # Pickup
   def handle_pickup_arrival(self, car: Car) -> None:
-    # car: Car = event.metadata
+    # car: Car = event.data
     rider: Rider = car.assigned_rider
 
     print(f"TIME {self.current_time}: CAR {car.id} picked up RIDER {rider.id}")
@@ -93,8 +109,9 @@ class Simulation:
     self.schedule_event(self.current_time + dropoff_duration, "DROPOFF_ARRIVAL", car)
     #print(f"TIME {self.current_time}: CAR {car.id} dispatched to RIDER {rider.id}")
 
+  # Dropoff
   def handle_dropoff_arrival(self, car: Car) -> None:
-    # car: Car = event.metadata
+    # car: Car = event.data
     rider: Rider = car.assigned_rider
 
     print(f"TIME {self.current_time}: CAR {car.id} dropped off RIDER {rider.id}")
@@ -105,6 +122,8 @@ class Simulation:
     rider.status = "completed"
     car.assigned_rider = None
 
+  # --- EVENT LOOP ---
+
   def run(self) -> None:
     """Runs the simulation by processing events in the event queue."""
     print("--- Starting Simulation ---\n")
@@ -114,13 +133,13 @@ class Simulation:
       self.current_time = event.timestamp
 
       if event.event_type == "RIDER_REQUEST":
-        self.handle_rider_request(event.metadata)
+        self.handle_rider_request(event.data)
 
       elif event.event_type == "PICKUP_ARRIVAL":
-        self.handle_pickup_arrival(event.metadata)
+        self.handle_pickup_arrival(event.data)
 
       elif event.event_type == "DROPOFF_ARRIVAL":
-        self.handle_dropoff_arrival(event.metadata)
+        self.handle_dropoff_arrival(event.data)
 
       else: 
         raise ValueError(f"Unknown event type: {event.event_type}")
@@ -138,7 +157,26 @@ Riders: {self.riders}
 -----------------------------
 """)  
 
+def main():
+  parser = argparse.ArgumentParser(description="Arguments can be passed in the CLI to adjust simulation.")
+  parser.add_argument("--max-time", type=int, default=100, help="Set the max time for the simulation.")
+  parser.add_argument("--num-riders", type=int, default=5, help="Default riders set to 5.")
+  parser.add_argument("--map-file", type=str, default='map.csv', help="Default map setting.")
+  # parser.add_argument("--num-cars", type=int, default=5, help="Default number of cars set to _.")
+  # parser.add_argument("--candidate-count", type=int, default=5, help="Default candidate count set to _.")
+  # parser.add_argument("--random-seed", type=int, default=5, help="Default seed set to _.")
+  args = parser.parse_args()
+
+  if args.max_time:
+    print(f"Max-time set to: {args.max_time}")
+  if args.num_riders:
+    print(f"Num-riders set to: {args.num_riders}")
+  if args.map_file:
+    # DEFAULT_MAP = args.map_file
+    print(f"Map set to: {args.map_file}")
+
 if __name__ == "__main__":
+  main()
   simulation = Simulation('map.csv')
 
   simulation.cars["car1"] = Car("CAR001", (10.0, 5.0))
@@ -147,8 +185,8 @@ if __name__ == "__main__":
   rider1 = Rider("RIDER001", (20.0, 5.0), (10.0, 10.0))
   rider2 = Rider("RIDER002", (20.0, 20.0), (10.0, 10.0))
 
-  simulation.schedule_event(timestamp=5, event_type="RIDER_REQUEST", metadata=rider1)
-  simulation.schedule_event(timestamp=10, event_type="RIDER_REQUEST", metadata=rider2)
+  simulation.schedule_event(timestamp=5, event_type="RIDER_REQUEST", data=rider1)
+  simulation.schedule_event(timestamp=10, event_type="RIDER_REQUEST", data=rider2)
 
   # car1.calculate_route('C', simulation.map.adjacency_list)
   # car2.calculate_route('C', simulation.map.adjacency_list)
