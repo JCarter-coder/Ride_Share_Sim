@@ -10,7 +10,7 @@ class Car:
     self.assigned_rider: Rider | None = None
     # self.destination: tuple | None = None
     self.route: list[tuple] | None = None
-    self.route_time: int | None = None
+    self.route_time: float | None = None
     self.busy_start_time = None
     self.total_busy_time: int = 0
     self.trips_completed: int = 0
