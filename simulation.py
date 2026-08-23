@@ -7,6 +7,7 @@ from itertools import count
 from car import Car
 from rider import Rider
 from graph import Graph
+from quadtree import Quadtree, Rectangle, Point
 from pathfinding import find_shortest_path
 
 # Global settings
@@ -32,10 +33,16 @@ class Simulation:
     self.event_queue: list[Event] = []
     self.sequence_number: int = count()
     self.cars = {}
-    self.riders = {}
+    self.available_cars = {} # { car.id: Car, ... }
+    self.available_car_points = {} # { car.id: Point, ... }
     self.map = Graph()
-
     self.map.load_map_data(map_filename)
+    self.boundary = Rectangle(self.map.x, self.map.y, self.map.width, self.map.height)
+    self.available_car_quadtree = Quadtree(self.boundary)
+    self.riders = {}
+
+  def add_available_car(self):
+    self.available_car_quadtree.root.insert()
 
   def calculate_travel_time(self, start_location: tuple, end_location: tuple) -> float:
     """Calculates the Manhattan Distance then returns the travel time"""
@@ -178,7 +185,12 @@ def main():
 if __name__ == "__main__":
   main()
   simulation = Simulation('Final_Map_50_Node_Grid.csv')
-  print(simulation.map)
+  # print(simulation.map)
+  print(f"x: {simulation.boundary.x}")
+  print(f"y: {simulation.boundary.y}")
+  print(f"width: {simulation.boundary.width}")
+  print(f"height: {simulation.boundary.height}")
+
 
   path, distance = find_shortest_path(simulation.map, 'N1', 'N19')
   print(path)
