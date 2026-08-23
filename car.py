@@ -22,8 +22,8 @@ Route {self.route} - Time: {self.route_time}
 """)
   
   def calculate_route(self, destination: tuple, graph: Graph) -> None:
-    start_node = self.location
-    end_node = destination
+    start_node: str = graph.find_nearest_vertex(self.location)
+    end_node: str = graph.find_nearest_vertex(destination)
     path, distance = find_shortest_path(graph, start_node, end_node)
     self.route = path
     self.route_time = distance
