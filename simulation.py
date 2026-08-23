@@ -8,6 +8,7 @@ from itertools import count
 from car import Car
 from rider import Rider
 from graph import Graph
+from pathfinding import find_shortest_path
 
 # Global settings
 TRAVEL_SPEED_FACTOR = 1
@@ -35,7 +36,7 @@ class Simulation:
     self.riders = {}
     self.map = Graph()
 
-    self.map.load_from_file(map_filename)
+    self.map.load_map_data(map_filename)
 
   def calculate_travel_time(self, start_location: tuple, end_location: tuple) -> float:
     """Calculates the Manhattan Distance then returns the travel time"""
@@ -177,7 +178,12 @@ def main():
 
 if __name__ == "__main__":
   main()
-  simulation = Simulation('map.csv')
+  simulation = Simulation('Final_Map_50_Node_Grid.csv')
+  print(simulation.map)
+
+  path, distance = find_shortest_path(simulation.map, 'N1', 'N19')
+  print(path)
+  print(distance)
 
   simulation.cars["car1"] = Car("CAR001", (10.0, 5.0))
   simulation.cars["car2"] = Car("CAR002", (15.0, 20.0))
