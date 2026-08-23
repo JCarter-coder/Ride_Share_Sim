@@ -104,6 +104,19 @@ class QuadtreeNode:
 
     return
 
+  def find_k_nearest(self, query_point: Point, k: int = 5) -> list[Point]:
+    # Reject nonpositive k values
+    if k <= 0:
+      return
+    # FIXME:
+    for _ in k:
+      self.find_nearest(query_point)
+    pass
+
+  def remove(point) -> bool:
+    # FIXME:
+    pass
+
 class Quadtree:
   """A quadtree data structure for efficient spatial queries."""
   def __init__(self, boundary: Rectangle):
