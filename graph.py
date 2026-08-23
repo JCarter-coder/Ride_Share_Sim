@@ -9,6 +9,11 @@ class Graph:
   def __init__(self):
     self.adjacency_list = collections.defaultdict(list) # {}
     self.node_coordinates: dict = {}
+    # To determine boundary of graph, initialize max origin, min dimensions
+    self.x: float = math.inf
+    self.y: float = math.inf
+    self.width: float = 0.0
+    self.height: float = 0.0
 
   # def add_vertex(self, vertex):
   #   if vertex not in self.adjacency_list:
@@ -20,6 +25,10 @@ class Graph:
   #   self.adjacency_list[start_node].append((end_node, weight))
 
   def load_map_data(self, filename):
+    # Used to determine the maximum points for width and height
+    max_x: float = -math.inf
+    max_y: float = -math.inf
+
     with open(filename, "r") as file:
       for line in file:
         if line.startswith("#") or not line.strip():
@@ -54,6 +63,28 @@ class Graph:
         self.adjacency_list[end_id].append(
           (start_id, float(weight))
         )
+
+        # Determine the graph's origin to determine the boundary
+        if float(start_x) < self.x:
+          self.x = float(start_x)
+        if float(end_x) < self.x:
+          self.x = float(end_x)
+        if float(start_y) < self.y:
+          self.y = float(start_y)
+        if float(end_y) < self.y:
+          self.y = float(end_y)
+        # Determine the graph's origin to determine the boundary
+        if float(start_x) > max_x:
+          max_x = float(start_x)
+        if float(end_x) > max_x:
+          max_x = float(end_x)
+        if float(start_y) > max_y:
+          max_y = float(start_y)
+        if float(end_y) > max_y:
+          max_y = float(end_y)
+
+      self.width = max_x - self.x
+      self.height = max_y - self.y
 
   # Snap coordinates to Graph Vertices
   def find_nearest_vertex(self, point: tuple) -> str | None:
