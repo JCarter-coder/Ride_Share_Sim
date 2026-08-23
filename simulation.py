@@ -3,7 +3,6 @@ import heapq
 import math
 from dataclasses import dataclass, field
 from enum import Enum, auto
-# from typing import Any
 from itertools import count
 from car import Car
 from rider import Rider
