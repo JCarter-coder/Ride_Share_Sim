@@ -1,3 +1,6 @@
+import heapq
+import itertools
+
 class Point:
   """A point in 2D space with an optional data attribute, e.g. label/identifier."""
   def __init__(self, x, y, data=None):
@@ -107,15 +110,86 @@ class QuadtreeNode:
   def find_k_nearest(self, query_point: Point, k: int = 5) -> list[Point]:
     # Reject nonpositive k values
     if k <= 0:
-      return
-    # FIXME:
-    for _ in k:
-      self.find_nearest(query_point)
-    pass
+      raise ValueError("k must be a positive integer.")
 
-  def remove(point) -> bool:
-    # FIXME:
-    pass
+    candidates: list[Point] = []
+    counter: int = itertools.count()
+
+    self._find_k_nearest(query_point, k, candidates, counter)
+
+    # Convert to nearest to farthest order
+    results = sorted(
+      candidates,
+      key=lambda candidate: -candidate[0]
+    )
+
+    return [candidate[2] for candidate in results]
+  
+  # Internal method
+  def _find_k_nearest(self, query_point: Point, k: int, candidates: list[Point], counter: int) -> None:
+    if len(candidates) == k:
+      farthest_dist_sq = -candidates[0][0]
+
+      if self.boundary.distance_sq_to_point(query_point) > farthest_dist_sq:
+        return
+
+    for point in self.points:
+      dist_sq = (
+        (point.x - query_point.x)**2 +
+        (point.y - query_point.y)**2
+      )
+
+      candidate = (-dist_sq, next(counter), point)
+
+      if len(candidates) < k:
+        heapq.heappush(candidates, candidate)
+
+      else:
+        farthest_dist_sq = - candidates[0][0]
+
+        if dist_sq < farthest_dist_sq:
+          heapq.heapreplace(candidates, candidate)
+
+    # Recursively search children nodes
+    if self.divided:
+      children = [
+        self.northwest,
+        self.northeast,
+        self.southwest,
+        self.southeast
+      ]
+
+      children.sort(
+        key=lambda child: child.boundary.distance_sq_to_point(query_point)
+      )
+
+      for child in children:
+        child._find_k_nearest(query_point, k, candidates, counter)
+
+  def remove(self, point) -> bool:
+    if not self.boundary.contains(point):
+      return False
+
+    for index, stored_point in enumerate(self.points):
+      # Ensure point is explicitly described (not just by coordinates)
+      if stored_point is point:
+        self.points.pop(index)
+        return True
+
+    if self.divided:
+      children = [
+        self.northwest,
+        self.northeast,
+        self.southwest,
+        self.southeast
+      ]
+
+      for child in children:
+        if child.bouadary.contains(point):
+          if child.remove(point):
+            return True
+
+    return False
 
 class Quadtree:
   """A quadtree data structure for efficient spatial queries."""
