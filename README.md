@@ -45,6 +45,13 @@ The `quadtree.py` file can be tested by running:
 pytest test_quadtree.py
 ```
 
+UPDATE:
+All tests within the tests directory can be ran from the commandline. Ensure to execute from the root directory. This will display the total statements, missing statements (untested), the test coverage percentage, and the missing statement lines.
+
+```bash
+python3 -m pytest --cov-report=term-missing --cov
+```
+
 ## Simulation Engine Prototype
 
 The simulation engine is a loop that processes the events in the event priority queue. Events are prioritized by the timestamp. In the loop, the highest priority event (smallest timestamp value) is popped off of the queue to process. If the event is a `RIDE_REQUEST`, the closest car is determined (using a simplified method for now) and then the rider is assigned to this car. The status of the car is updated and the duration to pickup the rider is calculated. A new event is then created and added to the priority queue for a `PICKUP`.
