@@ -1,15 +1,16 @@
 import heapq
 import math
+from graph import Graph
 
-def dijkstra(graph, start_node):
+def dijkstra(graph: Graph, start_node: str):
   """
   Implements Dijkstra's algorithm to find the shortest path from a start node
   to all other nodes in a weighted graph.
   """
-  distances = {node: math.inf for node in graph}
+  distances = {node: math.inf for node in graph.adjacency_list.keys()}
   distances[start_node] = 0
 
-  predecessors = {node: None for node in graph}
+  predecessors = {node: None for node in graph.adjacency_list.keys()}
 
   priority_queue = [(0, start_node)]
 
@@ -19,7 +20,7 @@ def dijkstra(graph, start_node):
     if current_distance > distances[current_node]:
       continue
 
-    for neighbor, weight in graph[current_node]:
+    for neighbor, weight in graph.adjacency_list[current_node]:
       distance = current_distance + weight
       if distance < distances[neighbor]:
         distances[neighbor] = distance
@@ -33,7 +34,7 @@ def reconstruct_path(predecessors, end_node):
   """
   Helper function to reconstruct the path from the predecessors dictionary
   """
-  path = []
+  path: list[str] = []
   current = end_node
 
   while current is not None:
@@ -45,7 +46,8 @@ def reconstruct_path(predecessors, end_node):
 
   return path
 
-def find_shortest_path(graph, start_node, end_node):
+# Find the shortest path between two nodes
+def find_shortest_path(graph: Graph, start_node: str, end_node: str):
   distances, predecessors = dijkstra(graph, start_node)
   path = reconstruct_path(predecessors, end_node)
   return path, distances[end_node]
