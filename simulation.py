@@ -15,6 +15,7 @@ from pathfinding import find_shortest_path
 TRAVEL_SPEED_FACTOR: int = 1
 DEFAULT_MAP: str = 'Final_Map_1000_Node_Grid.csv'
 DEFAULT_MAX_TIME: int = 20
+DEFAULT_MAX_RIDERS: int = 5
 DEFAULT_CANDIDATE_COUNT: int = 5 # k-value
 MEAN_ARRIVAL_TIME: int = 5
 
@@ -31,7 +32,7 @@ class Event:
   data: Rider | Car = field(compare=False) # Field ignored when ordering events in the priority queue
 
 class Simulation:
-  def __init__(self, map_filename, max_time=DEFAULT_MAX_TIME, num_riders=5):
+  def __init__(self, map_filename, max_time=DEFAULT_MAX_TIME, num_riders=DEFAULT_MAX_RIDERS):
     self.current_time: int = 0
     self.event_queue: list[Event] = []
     self.sequence_number: int = count()
@@ -190,10 +191,6 @@ class Simulation:
   def handle_rider_request(
       self, 
       rider: Rider 
-      #car: Car, 
-      #route: list[str], 
-      #route_time: float, 
-      #current_time
     ) -> None:
       print(
         f"RIDER_REQUEST: time={self.current_time},"
@@ -230,7 +227,6 @@ class Simulation:
 
       if best_car is not None:
         self.remove_available_car(best_car)
-        # modified handle_rider_request() method 
         
         best_car.status = "en_route_to_pickup"
         best_car.assigned_rider = rider
@@ -244,7 +240,6 @@ class Simulation:
 
   # Pickup
   def handle_pickup_arrival(self, car: Car) -> None:
-    # car: Car = event.data
     rider: Rider = car.assigned_rider
 
     print(
@@ -275,11 +270,6 @@ class Simulation:
       car.assigned_rider = None
       self.add_available_car(car)
 
-    # Calculate time from rider to destination
-    #dropoff_duration = self.calculate_travel_time(car.location, rider.destination)
-
-    #print(f"TIME {self.current_time}: CAR {car.id} dispatched to RIDER {rider.id}")
-
   # Dropoff
   def handle_dropoff_arrival(self, car: Car) -> None:
     print(
@@ -294,12 +284,10 @@ class Simulation:
 
     # Update car location, car status, and rider status
     car.location = rider.destination
-    # car.status = "available"
     rider.status = "completed"
     rider.dropoff_time = self.current_time
     car.assigned_rider = None
 
-    #completion_time = self.current_time - rider.request_time
     car.total_busy_time += (self.current_time - car.busy_start_time)
     car.trips_completed += 1
     self.add_available_car(car)
@@ -373,4 +361,3 @@ if __name__ == "__main__":
   print(f"Number of riders: {simulation.riders}")
 
   simulation.run()
-
