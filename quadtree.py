@@ -185,7 +185,7 @@ class QuadtreeNode:
       ]
 
       for child in children:
-        if child.bouadary.contains(point):
+        if child.boundary.contains(point):
           if child.remove(point):
             return True
 

@@ -9,7 +9,7 @@ class Car:
     self.status: str = "available" # -> "en_route_to_pickup" -> "en_route_to_destination" ->
     self.assigned_rider: Rider | None = None
     # self.destination: tuple | None = None
-    self.route: list[tuple] | None = None
+    self.route: list[str] | None = None
     self.route_time: float | None = None
     self.busy_start_time = None
     self.total_busy_time: int = 0

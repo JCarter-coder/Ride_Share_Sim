@@ -34,6 +34,8 @@ def reconstruct_path(predecessors, end_node):
   """
   Helper function to reconstruct the path from the predecessors dictionary
   """
+  if end_node not in predecessors:
+    raise ValueError(f"End node {end_node} does not exist in the graph.")
   path: list[str] = []
   current = end_node
 
