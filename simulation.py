@@ -13,7 +13,7 @@ from pathfinding import find_shortest_path
 
 # Default settings
 TRAVEL_SPEED_FACTOR: int = 1
-DEFAULT_MAP: str = 'Final_Map_50_Node_Grid.csv'
+DEFAULT_MAP: str = 'Final_Map_1000_Node_Grid.csv'
 DEFAULT_MAX_TIME: int = 20
 DEFAULT_CANDIDATE_COUNT: int = 5 # k-value
 MEAN_ARRIVAL_TIME: int = 5
@@ -31,7 +31,7 @@ class Event:
   data: Rider | Car = field(compare=False) # Field ignored when ordering events in the priority queue
 
 class Simulation:
-  def __init__(self, map_filename):
+  def __init__(self, map_filename, max_time=DEFAULT_MAX_TIME, num_riders=5):
     self.current_time: int = 0
     self.event_queue: list[Event] = []
     self.sequence_number: int = count()
@@ -50,8 +50,8 @@ class Simulation:
     self.car_id_num: int = 1
     self.rider_id_num: int = 1
     self.num_cars: int = 5
-    self.num_riders: int = 5
-    self.max_time: int = DEFAULT_MAX_TIME
+    self.num_riders: int = num_riders
+    self.max_time: int = max_time
     self.candidate_count: int = DEFAULT_CANDIDATE_COUNT
 
   def generate_cars(self) -> None:
@@ -112,7 +112,8 @@ class Simulation:
 
   def generate_rider_request(self):
     request_time = self.current_time # Begins at initial value of 0
-    while self.num_riders > 0:
+    current_num_riders = 0
+    while current_num_riders < self.num_riders:
       # If max time is not exceeded, generate riders
       if request_time >= self.max_time:
         print("Time is up!")
@@ -134,13 +135,15 @@ class Simulation:
 
       # Schedule Rider Event
       self.schedule_event(rider.request_time, "RIDER_REQUEST", rider)
+      # Add to rider dictionary for future reference
+      self.riders[rider.id] = rider
 
       # Generate a new request time for the next rider
       request_time += math.floor(random.expovariate(1 / MEAN_ARRIVAL_TIME))
       # Increment num for next rider generation id
       self.rider_id_num += 1
       # Decrement number of riders to generate
-      self.num_riders -= 1
+      current_num_riders += 1
     
   def calculate_travel_time(self, start_location: tuple, end_location: tuple) -> float:
     """Calculates the Manhattan Distance then returns the travel time"""
@@ -192,7 +195,10 @@ class Simulation:
       #route_time: float, 
       #current_time
     ) -> None:
-      print(f"Matching rider {rider.id} with a driver...\n")
+      print(
+        f"RIDER_REQUEST: time={self.current_time},"
+        f"rider={rider.id}"
+      )
       # Convert rider start tuple into a Point to query
       query_point = Point(rider.start_location[0], rider.start_location[1])
       candidate_points = (
@@ -241,7 +247,11 @@ class Simulation:
     # car: Car = event.data
     rider: Rider = car.assigned_rider
 
-    print(f"TIME {self.current_time}: CAR {car.id} picked up RIDER {rider.id}")
+    print(
+      f"PICKUP_ARRIVAL: time={self.current_time},"
+      f"car={car.id},"
+      f"assigned_rider={rider}"
+    )
 
     # Update car location, car status, and rider status
     car.location = rider.start_location
@@ -273,7 +283,7 @@ class Simulation:
   # Dropoff
   def handle_dropoff_arrival(self, car: Car) -> None:
     print(
-      f"DEBUG DROPOFF: time={self.current_time},"
+      f"DROPOFF: time={self.current_time},"
       f"car={car.id},"
       f"assigned_rider={car.assigned_rider}"
     )
@@ -305,7 +315,7 @@ class Simulation:
       self.current_time = event.timestamp
 
       print(
-        f"DEBUG EVENT: time={event.timestamp},"
+        f"EVENT: time={event.timestamp},"
         f"type={event.event_type},"
         f"data={event.data}"
       )
@@ -337,26 +347,20 @@ Riders: {self.riders}
 
 def main():
   parser = argparse.ArgumentParser(description="Arguments can be passed in the CLI to adjust simulation.")
-  parser.add_argument("--max-time", type=int, default=100, help="Set the max time for the simulation.")
-  parser.add_argument("--num-riders", type=int, default=5, help="Default riders set to 5.")
-  parser.add_argument("--map-file", type=str, default='map.csv', help="Default map setting.")
-  # parser.add_argument("--num-cars", type=int, default=5, help="Default number of cars set to _.")
-  # parser.add_argument("--candidate-count", type=int, default=5, help="Default candidate count set to _.")
-  # parser.add_argument("--random-seed", type=int, default=5, help="Default seed set to _.")
-  args = parser.parse_args()
-
-  if args.max_time:
-    print(f"Max-time set to: {args.max_time}")
-  if args.num_riders:
-    print(f"Num-riders set to: {args.num_riders}")
-  if args.map_file:
-    # DEFAULT_MAP = args.map_file
-    print(f"Map set to: {args.map_file}")
+  parser.add_argument("--max-time", type=int, default=DEFAULT_MAX_TIME, help="Set the max time for the simulation.")
+  parser.add_argument("--num-riders", type=int, default=5, help="Set the number of riders.")
+  parser.add_argument("--map-file", type=str, default=DEFAULT_MAP, help="Set the map file.")
+  
+  return parser.parse_args()
 
 if __name__ == "__main__":
-  main()
-  simulation = Simulation(DEFAULT_MAP)
-  # print(simulation.map)
+  args = main()
+  simulation = Simulation(
+    map_filename=args.map_file,
+    max_time=args.max_time,
+    num_riders=args.num_riders
+  )
+
   print(f"x: {simulation.boundary.x}")
   print(f"y: {simulation.boundary.y}")
   print(f"width: {simulation.boundary.width}")
@@ -364,26 +368,9 @@ if __name__ == "__main__":
 
   simulation.generate_cars()
   simulation.generate_rider_request()
-  # print(simulation.cars)
-  # print(simulation.available_car_points)
-  # print(simulation.event_queue)
-  # print(len(simulation.event_queue))
 
-  # path, distance = find_shortest_path(simulation.map, 'N1', 'N19')
-  # print(path)
-  # print(distance)
-
-  # simulation.cars["car1"] = Car("CAR001", (10.0, 5.0))
-  # simulation.cars["car2"] = Car("CAR002", (15.0, 20.0))
-
-  # rider1 = Rider("RIDER001", (20.0, 5.0), (10.0, 10.0))
-  # rider2 = Rider("RIDER002", (20.0, 20.0), (10.0, 10.0))
-
-  # simulation.schedule_event(timestamp=5, event_type="RIDER_REQUEST", data=rider1)
-  # simulation.schedule_event(timestamp=10, event_type="RIDER_REQUEST", data=rider2)
-
-  # car1.calculate_route('C', simulation.map.adjacency_list)
-  # car2.calculate_route('C', simulation.map.adjacency_list)
+  print(f"Number of cars: {len(simulation.cars)}")
+  print(f"Number of riders: {simulation.riders}")
 
   simulation.run()
 
