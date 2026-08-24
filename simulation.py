@@ -11,11 +11,12 @@ from graph import Graph
 from quadtree import Quadtree, Rectangle, Point
 from pathfinding import find_shortest_path
 
-# Global settings
-TRAVEL_SPEED_FACTOR = 1
-DEFAULT_MAP: str = 'map.csv'
-DEFAULT_CANDIDATE_COUNT = 5
-MEAN_ARRIVAL_TIME = 5
+# Default settings
+TRAVEL_SPEED_FACTOR: int = 1
+DEFAULT_MAP: str = 'Final_Map_50_Node_Grid.csv'
+DEFAULT_MAX_TIME: int = 20
+DEFAULT_CANDIDATE_COUNT: int = 5 # k-value
+MEAN_ARRIVAL_TIME: int = 5
 
 class EventStatus(Enum):
   RIDER_REQUEST = auto()
@@ -42,12 +43,14 @@ class Simulation:
     self.boundary = Rectangle(self.map.x, self.map.y, self.map.width, self.map.height)
     self.available_car_quadtree = Quadtree(self.boundary) # For spatial index of available cars
     self.riders: dict[Rider] = {}
+    
+    # Default settings
     self.car_id_num: int = 1
     self.rider_id_num: int = 1
-    # Default settings
-    self.num_cars = 5
-    self.num_riders = 5
-    self.max_time = 20
+    self.num_cars: int = 5
+    self.num_riders: int = 5
+    self.max_time: int = DEFAULT_MAX_TIME
+    self.candidate_count: int = DEFAULT_CANDIDATE_COUNT
 
   def generate_cars(self) -> None:
     cars_created = 0
@@ -61,19 +64,25 @@ class Simulation:
       location = (random.uniform(x_min, x_max), random.uniform(y_min, y_max))
       car = Car(car_id, location)
       self.cars[car.id] = car
+      # Add to available car dict
+      self.add_available_car(car)
       # Increment initial values
       self.car_id_num += 1
       cars_created += 1
 
   def add_available_car(self, car: Car) -> None:
+    # Convert tuple into a Point
+    x, y = car.location
+    car_point = Point(x, y, data=car)
     if (
-      not self.available_cars[car.id] and
-      not self.available_car_points[car.id] and
-      self.boundary.contains(car.location)
+      car.id not in self.available_cars and
+      car.id not in self.available_car_points and
+      self.boundary.contains(car_point)
     ):
+      
       car_point = Point(
-        x=car.location[0],
-        y=car.location[1],
+        x,
+        y,
         data=car
       )
       is_successful = self.available_car_quadtree.root.insert(car_point)
@@ -111,6 +120,14 @@ class Simulation:
         rider.request_time = request_time
         # Schedule Rider Event
         self.schedule_event(rider.request_time, "RIDER_REQUEST", rider)
+        # Convert rider start tuple into a Point to query
+        query_point = Point(start[0], start[1])
+        candidate_points = (
+          self.available_car_quadtree.root.find_k_nearest(
+            query_point,
+            k=self.candidate_count
+          )
+        )
         # Generate a new request time for the next rider
         request_time += math.floor(random.expovariate(1 / MEAN_ARRIVAL_TIME))
         # Increment num for next rider generation id
@@ -261,7 +278,7 @@ def main():
 
 if __name__ == "__main__":
   main()
-  simulation = Simulation('Final_Map_50_Node_Grid.csv')
+  simulation = Simulation(DEFAULT_MAP)
   # print(simulation.map)
   print(f"x: {simulation.boundary.x}")
   print(f"y: {simulation.boundary.y}")
@@ -271,6 +288,7 @@ if __name__ == "__main__":
   simulation.generate_cars()
   #simulation.generate_rider_request()
   print(simulation.cars)
+  print(simulation.available_car_points)
   # print(simulation.event_queue)
   # print(len(simulation.event_queue))
 
