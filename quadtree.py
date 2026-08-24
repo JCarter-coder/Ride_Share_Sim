@@ -33,7 +33,7 @@ class QuadtreeNode:
   """A node in the quadtree that can contain points and subdivide into four child nodes."""
   def __init__(self, boundary: Rectangle, capacity=4):
     self.boundary = boundary
-    self.points = []
+    self.points: list[Point] = []
     self.capacity = capacity
     self.divided = False
     # Children nodes
@@ -166,7 +166,7 @@ class QuadtreeNode:
       for child in children:
         child._find_k_nearest(query_point, k, candidates, counter)
 
-  def remove(self, point) -> bool:
+  def remove(self, point: Point) -> bool:
     if not self.boundary.contains(point):
       return False
 
