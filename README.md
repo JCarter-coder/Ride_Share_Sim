@@ -20,13 +20,37 @@ To run the simulation,
 python3 simulation.py
 ```
 
+### Command line arguments
+
+The following command lines can be added when running the simulation for customization to your instance.
+
+To update the map, simply add the .csv file to the working directory and run:
+```bash
+python3 simulation.py --map-file="Your_Map.csv"
+```
+
+To update the number of riders to 20:
+```bash
+python3 simulation.py --num-riders=20
+```
+
+To update the max time to 1000:
+```bash
+python3 simulation.py --max-time=1000
+```
+
 ## Dependencies
 
-None
+Checkout the requirements.txt file for the list of dependencies and versions.
+
+The requirements.txt file was created in the virtual environment running:
+```bash
+pip freeze > requirements.txt
+```
 
 ## Map Data Format
 
-The map data is captured in `map.csv`. Each row of this file represents a directed edge which contains values that represent the starting point, ending point, and travel time (i.e. weight) respectively. When the simulation is ran, the `map` attribute within Simulation instantiates a Graph passing the .csv file name as an argument to load the data into `map`.
+The map data is captured in `Final_Map_1000_Node_Grid.csv`. Each row of this file represents a directed edge which contains values that represent the starting point, ending point, and travel time (i.e. weight) respectively. When the simulation is ran, the `map` attribute within Simulation instantiates a Graph passing the .csv file name as an argument to load the data into `map`.
 
 ## Pathfinding
 
@@ -45,7 +69,8 @@ The `quadtree.py` file can be tested by running:
 pytest test_quadtree.py
 ```
 
-UPDATE:
+## Testing
+
 All tests within the tests directory can be ran from the commandline. Ensure to execute from the root directory. This will display the total statements, missing statements (untested), the test coverage percentage, and the missing statement lines.
 
 ```bash
@@ -54,8 +79,8 @@ python3 -m pytest --cov-report=term-missing --cov
 
 ## Simulation Engine Prototype
 
-The simulation engine is a loop that processes the events in the event priority queue. Events are prioritized by the timestamp. In the loop, the highest priority event (smallest timestamp value) is popped off of the queue to process. If the event is a `RIDE_REQUEST`, the closest car is determined (using a simplified method for now) and then the rider is assigned to this car. The status of the car is updated and the duration to pickup the rider is calculated. A new event is then created and added to the priority queue for a `PICKUP`.
+The simulation engine is a loop that processes the events in the event priority queue. Events are prioritized by the timestamp. In the loop, the highest priority event (smallest timestamp value) is popped off of the queue to process. If the event is a `RIDE_REQUEST`, the closest car is determined using the `find_k_nearest()` method of the quadtree data structure and then the rider is assigned to this car. The status of the car is updated and the duration to pickup the rider is calculated. A new event is then created and added to the priority queue for a `PICKUP`.
 
-If the next event being processed is a `PICKUP`, the car's location is updated to the rider's current location. The car and rider status are both updated as applicable. The dropoff duration is then calculated. Lastly, a new event is created and added to the priority queue for a `DROPOFF`.
+If the next event being processed is a `PICKUP`, the car's location is updated to the rider's current location. The car and rider status are both updated as applicable. The dropoff duration and is then calculated using the `find_shortest_path()` method. Lastly, a new event is created and added to the priority queue for a `DROPOFF`.
 
 If the next event from the priority queue is a `DROPOFF`, the car's location is updated to the rider's destination, the car's status is updated to `available`, the rider's status is updated to `completed`, and the car's assigned rider is reset to `None`.
