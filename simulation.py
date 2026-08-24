@@ -1,6 +1,7 @@
 import argparse
 import heapq
 import math
+import random
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from itertools import count
@@ -14,6 +15,7 @@ from pathfinding import find_shortest_path
 TRAVEL_SPEED_FACTOR = 1
 DEFAULT_MAP: str = 'map.csv'
 DEFAULT_CANDIDATE_COUNT = 5
+MEAN_ARRIVAL_TIME = 5
 
 class EventStatus(Enum):
   RIDER_REQUEST = auto()
@@ -32,18 +34,93 @@ class Simulation:
     self.current_time: int = 0
     self.event_queue: list[Event] = []
     self.sequence_number: int = count()
-    self.cars = {}
-    self.available_cars = {} # { car.id: Car, ... }
-    self.available_car_points = {} # { car.id: Point, ... }
+    self.cars: dict[str, Car] = {}
+    self.available_cars: dict[str, Car] = {} # { car.id: Car, ... }
+    self.available_car_points: dict[str, Point] = {} # { car.id: Point, ... }
     self.map = Graph()
     self.map.load_map_data(map_filename)
     self.boundary = Rectangle(self.map.x, self.map.y, self.map.width, self.map.height)
-    self.available_car_quadtree = Quadtree(self.boundary)
-    self.riders = {}
+    self.available_car_quadtree = Quadtree(self.boundary) # For spatial index of available cars
+    self.riders: dict[Rider] = {}
+    self.car_id_num: int = 1
+    self.rider_id_num: int = 1
+    # Default settings
+    self.num_cars = 5
+    self.num_riders = 5
+    self.max_time = 20
 
-  def add_available_car(self):
-    self.available_car_quadtree.root.insert()
+  def generate_cars(self) -> None:
+    cars_created = 0
+    while cars_created < self.num_cars:
+      # Generate a Car
+      car_id = "Car-" + str(self.car_id_num)
+      x_min = self.boundary.x
+      y_min = self.boundary.y
+      x_max = self.boundary.width
+      y_max = self.boundary.height
+      location = (random.uniform(x_min, x_max), random.uniform(y_min, y_max))
+      car = Car(car_id, location)
+      self.cars[car.id] = car
+      # Increment initial values
+      self.car_id_num += 1
+      cars_created += 1
 
+  def add_available_car(self, car: Car) -> None:
+    if (
+      not self.available_cars[car.id] and
+      not self.available_car_points[car.id] and
+      self.boundary.contains(car.location)
+    ):
+      car_point = Point(
+        x=car.location[0],
+        y=car.location[1],
+        data=car
+      )
+      is_successful = self.available_car_quadtree.root.insert(car_point)
+      # If inserted into quadtree successfully, update dicts and car status
+      if is_successful:
+        self.available_cars[car.id] = Car
+        self.available_car_points[car.id] = car_point
+        car.status = "available"
+      else: 
+        print(f"REPORT: add_available_car({car.id}) unsuccessful...")
+
+  def remove_available_car(self, car: Car) -> None:
+    car_point_to_remove = self.available_car_points[car.id]
+    is_successful = self.available_car_quadtree.root.remove(car_point_to_remove)
+    # If removed from quadtree successfully, pop from available car points
+    if is_successful:
+      self.available_car_points.pop(car.id, None)
+    else: 
+      print(f"REPORT: remove_available_car({car.id}) unsuccessful...")
+
+  def generate_rider_request(self):
+    request_time = self.current_time # Begins at initial value of 0
+    while self.num_riders > 0:
+      # If max time is not exceeded, generate riders
+      if request_time < self.max_time:
+        # Generate a Rider
+        rider_id = "Rider-" + str(self.rider_id_num)
+        x_min = self.boundary.x
+        y_min = self.boundary.y
+        x_max = self.boundary.width
+        y_max = self.boundary.height
+        start = (random.uniform(x_min, x_max), random.uniform(y_min, y_max))
+        destination = (random.uniform(x_min, x_max), random.uniform(y_min, y_max))
+        rider = Rider(rider_id, start, destination)
+        rider.request_time = request_time
+        # Schedule Rider Event
+        self.schedule_event(rider.request_time, "RIDER_REQUEST", rider)
+        # Generate a new request time for the next rider
+        request_time += math.floor(random.expovariate(1 / MEAN_ARRIVAL_TIME))
+        # Increment num for next rider generation id
+        self.rider_id_num += 1
+        # Decrement number of riders to generate
+        self.num_riders -= 1
+      else:
+        print(f"Time is up!")
+        break
+    
   def calculate_travel_time(self, start_location: tuple, end_location: tuple) -> float:
     """Calculates the Manhattan Distance then returns the travel time"""
     x1, y1 = start_location
@@ -191,22 +268,27 @@ if __name__ == "__main__":
   print(f"width: {simulation.boundary.width}")
   print(f"height: {simulation.boundary.height}")
 
+  simulation.generate_cars()
+  #simulation.generate_rider_request()
+  print(simulation.cars)
+  # print(simulation.event_queue)
+  # print(len(simulation.event_queue))
 
   path, distance = find_shortest_path(simulation.map, 'N1', 'N19')
   print(path)
   print(distance)
 
-  simulation.cars["car1"] = Car("CAR001", (10.0, 5.0))
-  simulation.cars["car2"] = Car("CAR002", (15.0, 20.0))
+  # simulation.cars["car1"] = Car("CAR001", (10.0, 5.0))
+  # simulation.cars["car2"] = Car("CAR002", (15.0, 20.0))
 
-  rider1 = Rider("RIDER001", (20.0, 5.0), (10.0, 10.0))
-  rider2 = Rider("RIDER002", (20.0, 20.0), (10.0, 10.0))
+  # rider1 = Rider("RIDER001", (20.0, 5.0), (10.0, 10.0))
+  # rider2 = Rider("RIDER002", (20.0, 20.0), (10.0, 10.0))
 
-  simulation.schedule_event(timestamp=5, event_type="RIDER_REQUEST", data=rider1)
-  simulation.schedule_event(timestamp=10, event_type="RIDER_REQUEST", data=rider2)
+  # simulation.schedule_event(timestamp=5, event_type="RIDER_REQUEST", data=rider1)
+  # simulation.schedule_event(timestamp=10, event_type="RIDER_REQUEST", data=rider2)
 
   # car1.calculate_route('C', simulation.map.adjacency_list)
   # car2.calculate_route('C', simulation.map.adjacency_list)
 
-  simulation.run()
+  #simulation.run()
 
